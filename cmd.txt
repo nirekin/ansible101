@@ -1,0 +1,4 @@
+docker run --env-file=envvars -v $PWD/test_volume:/tmp/test_volume -v $PWD/:/tmp/test_volume nirekin/ansible
+
+docker build --no-cache -t nirekin/ansible .
+
