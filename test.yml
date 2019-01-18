@@ -10,7 +10,7 @@
     val_http: "{{ lookup('env','env_http') }}"
     val_https: "{{ lookup('env','env_https') }}"
     
-    # use "or" to default a variable
+    # use "or" to default a variable lookup
     val_missing_envvar: "{{ lookup('env','dummy') or ('has_been_defaulted')  }}"
     
     # this environment variable is defined but has no content
@@ -25,6 +25,15 @@
     debug:
       msg: "Env var http={{ val_http }}"  
   
+  # Check command line varaibles with assertion
+  - name: 'Check mandatory variables are defined'
+    assert:
+      that:
+        - version is defined
+        - version == "version_val"
+  
+        - other_variable is defined
+        - other_variable == "other_variable_val"
   
   # Check required varaible with assertion
   - name: 'Check mandatory variables are defined'
@@ -47,16 +56,19 @@
   
   
   #When condition    
+  #When the variable is defined
   - name: Run only if val_http is defined
     debug:
       msg: "Runs only if val_http is defined"  
     when: val_http is defined       
-      
+  
+  #When the variable is equals to a given value
   - name: Run only if val_http == on
     debug:
       msg: "Runs only if val_http == on"  
     when: val_http == "on" 
   
+  #When the variable is equals to a value or another one
   - name: Run while val_http == on or val_http == off 
     debug:
       msg: "Run while val_http == on or val_http == off "  
@@ -69,16 +81,17 @@
       content: "Simple file content\n on the port {{ listening_on }} \nand that's it for \n{{ val_http }} \nand \n{{ val_https }}\nand \n{{ val_missing_envvar }}" 
       dest: /tmp/test_volume/testfile.txt
   
-  #Locading parameter from a file
+  #Loading variable from a file
   - name: Include vars of test_param.yml into the 'fromFile' variable
     include_vars:
       file: test_param.yml
       name: fromFile
   
-  # Length filter in Jinja2 to see dictionary length
+  # Getting the dictionary length with a Jinja2 filter 
   - name: Check required http envionment variable 
     debug:
       msg: "Number of keys={{ fromFile.keys_content|length }}"    
+  
   
   #Looping over a dictionary
   - name: Seing number of keys_content loaded from file
@@ -87,8 +100,13 @@
     with_items:
       - "{{ fromFile.keys_content }}"
   
-  # Checking1 fromFile
-  - name: 'Checking1 if fromFile is well loaded'
+  - name: 'Setting tact'
+    set_fact:
+      val2: "{{ fromFile.keys_content[2] }}"
+      val_empty: "{{ fromFile.keys_content[5] | default('empty_val')}}"
+  
+  # Checking from File
+  - name: 'Checking if fromFile is well loaded'
     assert:
       that:
         - fromFile.from_file_1 is defined
@@ -119,3 +137,15 @@
         - fromFile.keys_content[2] == "key3"
         - fromFile.keys_content[3] == "key4"
         - fromFile.keys_content[4] == "key5"
+        
+        - val2 == "key3"
+        - val_empty == "empty_val"
+
+        
+  # Checking1 from global variable passed with a file "all"
+  # located in /etc/ansible/group_vars
+  - name: 'Checking1 if fromFile is well loaded'
+    assert:
+      that:
+        - global_from_file_1 == "from_file_1_val"
+        - global_from_file_2 == "from_file_2_val"
