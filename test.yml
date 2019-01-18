@@ -1,0 +1,126 @@
+---
+- name: This is a hello-world example
+  hosts: localhost
+  gather_facts: false
+  vars:
+    # local variable definition
+    listening_on: 8080
+    
+    #reading environment variable
+    val_http: "{{ lookup('env','env_http') }}"
+    val_https: "{{ lookup('env','env_https') }}"
+    
+    # use "or" to default a variable
+    val_missing_envvar: "{{ lookup('env','dummy') or ('has_been_defaulted')  }}"
+    
+    # this environment variable is defined but has no content
+    val_empty: "{{ lookup('env','env_empty')}}"
+    val_empty_defaulted: "{{ lookup('env','env_empty_defaulted') or ('has_been_defaulted')}}"
+    
+  tasks:
+  
+  - name: Check required http envionment variable 
+    debug:
+      msg: "Env var http={{ val_http }}"  
+  - name: Check required https envionment variable       
+    debug:
+      msg: "Env var https={{ val_https }}"  
+  - name: Check defaulted envionment variable       
+    debug:
+      msg: "Env var missing_envvar={{ val_missing_envvar }}"  
+  - name: Check empty envionment variable       
+    debug:
+      msg: "Env var val_empty={{ val_empty }}"  
+  - name: Check empty defaulted envionment variable       
+    debug:
+      msg: "Env var val_empty_defaulted={{ val_empty_defaulted }}"  
+
+  
+  # Check required varaible with assertion
+  - name: 'Check mandatory variables are defined'
+    assert:
+      that:
+        - val_http is defined
+        - val_http == "on"  or val_http == "off" 
+        
+        - val_https is defined
+        - val_https == "on"  or val_https == "off" 
+        
+        - val_missing_envvar is defined
+        - val_missing_envvar == "has_been_defaulted"
+        
+        - val_empty is defined
+        - val_empty == ""
+        
+        - val_empty_defaulted is defined
+        - val_empty_defaulted == "has_been_defaulted"
+  
+  
+  #When condition    
+  - name: Run only if val_http is defined
+    debug:
+      msg: "Runs only if val_http is defined"  
+    when: val_http is defined       
+      
+  - name: Run only if val_http == on
+    debug:
+      msg: "Runs only if val_http == on"  
+    when: val_http == "on" 
+  
+  - name: Run while val_http == on or val_http == off 
+    debug:
+      msg: "Run while val_http == on or val_http == off "  
+    when: val_http == "on"  or val_http == "off" 
+
+  - name: Run while val_https == on or val_https == off 
+    debug:
+      msg: "Run while val_https == on or val_https == off "  
+    when: val_https == "on"  or val_https == "off" 
+
+  #File creation
+  - name: Create a file called '/tmp/testfile.txt' with the content 'hello world'.
+    copy: 
+      content: "hello world\n we are listening on the port {{ listening_on }} \nand that's it for \n{{ val_http }} \nand \n{{ val_https }}\nand \n{{ val_missing_envvar }}" 
+      dest: /tmp/test_volume/testfile.txt
+  
+  #Locading parameter from a file
+  - name: Include vars of test_param.yml into the 'fromFile' variable
+    include_vars:
+      file: test_param.yml
+      name: fromFile
+  
+  - name: Seing number of keys_content loaded from file
+    debug: 
+      msg: "{{ item }}"
+    with_items:
+      - "{{ fromFile.keys_content }}"
+  
+  # Checking1 fromFile
+  - name: 'Checking1 if fromFile is well loaded'
+    assert:
+      that:
+        - fromFile.from_file_1 is defined
+        - fromFile.from_file_1 == "from_file_1_val"
+
+        - fromFile.from_file_2 is defined
+        - fromFile.from_file_2 == "from_file_2_val"
+
+        - fromFile.from_file_3.sub1 is defined
+        - fromFile.from_file_3.sub1 == "sub1_val"
+
+        - fromFile.from_file_3.sub2 is defined
+        - fromFile.from_file_3.sub2 == "sub2_val"
+
+        - fromFile.from_file_3.sub3 is defined
+        - fromFile.from_file_3.sub3 == "sub3_val"
+
+        - fromFile.from_file_3.sub4 is defined
+        - fromFile.from_file_3.sub4 == "sub4_val"
+
+        - fromFile.keys_content is defined
+        #- {{fromFile.keys_content|length}} == 5
+        - fromFile.keys_content[0] == "key1"
+        - fromFile.keys_content[1] == "key2"
+        - fromFile.keys_content[2] == "key3"
+        - fromFile.keys_content[3] == "key4"
+        - fromFile.keys_content[4] == "key5"
