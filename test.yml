@@ -149,3 +149,17 @@
       that:
         - global_from_file_1 == "from_file_1_val"
         - global_from_file_2 == "from_file_2_val"
+
+        
+  - name: Check parameters with block
+    block:
+    - set_fact:
+        required_vars:
+        - global_from_file_1
+        - global_from_file_2
+    - name: Check required parameters
+      fail: msg="Parameter '{{item}}' is not defined"
+      when: item not in vars
+      with_items: "{{required_vars}}"
+
+ 
