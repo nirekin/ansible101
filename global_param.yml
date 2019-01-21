@@ -1,3 +1,10 @@
 ---
 global_from_file_1: from_file_1_val
 global_from_file_2: from_file_2_val
+
+root:
+  leaf_1: leaf_1_val 
+  leaf_2: leaf_1_va2
+  leaf_3: leaf_1_va3
+  leaf_4: leaf_1_va4
+  leaf_5: leaf_1_va5
